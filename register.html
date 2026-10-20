@@ -56,7 +56,7 @@ button.go:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
     <button class="go" id="btn" type="submit">สมัครสมาชิก</button>
   </form>
 
-  <p class="foot">มีบัญชีอยู่แล้ว? <a href="login.html">เข้าสู่ระบบ</a></p>
+  <p class="foot">มีบัญชีอยู่แล้ว? <a href="index.html">เข้าสู่ระบบ</a></p>
 </main>
 
 <script src="config.js"></script>
@@ -85,7 +85,7 @@ $('f').addEventListener('submit', async e => {
 
   if (!r.ok) return say(r.error || 'สมัครไม่สำเร็จ');
   say('สมัครสำเร็จ กำลังพาไปหน้าเข้าสู่ระบบ...', true);
-  setTimeout(() => location.href = 'login.html?registered=1', 1200);
+  setTimeout(() => location.href = 'index.html?registered=1', 1200);
 });
 </script>
 </body>
