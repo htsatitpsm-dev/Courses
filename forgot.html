@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ลืมรหัสผ่าน | SCI - TECH</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f5f7f6;--card:#fff;--ink:#1d2a26;--muted:#667570;--line:#dbe3df;--brand:#c80909;--err:#c93c3c}
+@media (prefers-color-scheme:dark){:root{--bg:#121816;--card:#1b2420;--ink:#e8f0ec;--muted:#93a39c;--line:#2a3631;--brand:#c80909;--err:#ff7b7b}}
+*{box-sizing:border-box;margin:0}
+body{font-family:"Noto Sans Thai",system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;display:grid;place-items:center;padding:20px}
+.box{width:100%;max-width:400px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:32px 28px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:1.2rem;margin-bottom:22px}
+.logo i{width:38px;height:38px;border-radius:10px;background:var(--brand);color:#fff;display:grid;place-items:center;font-style:normal}
+h1{font-size:1.4rem}
+.sub{color:var(--muted);margin:4px 0 12px;font-size:.95rem}
+label{display:block;font-weight:500;margin:14px 0 6px;font-size:.95rem}
+input{width:100%;padding:11px 14px;border:1px solid var(--line);border-radius:8px;font:inherit;background:var(--bg);color:var(--ink)}
+input:focus{outline:3px solid var(--brand);outline-offset:0;border-color:var(--brand)}
+#code{letter-spacing:.4em;text-align:center;font-size:1.3rem}
+small{color:var(--muted);font-size:.8rem}
+button.go{width:100%;margin-top:20px;padding:12px;border:0;border-radius:8px;background:var(--brand);color:#fff;font:inherit;font-weight:700;cursor:pointer}
+button.go:disabled{opacity:.6;cursor:wait}
+button.go:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.link{background:none;border:0;color:var(--brand);font:inherit;font-size:.9rem;cursor:pointer;padding:0;margin-top:12px}
+.link:disabled{color:var(--muted);cursor:default}
+.msg{min-height:1.4em;margin-top:12px;color:var(--err);font-size:.9rem}
+.msg.ok{color:var(--brand)}
+.foot{margin-top:18px;text-align:center;font-size:.92rem;color:var(--muted)}
+.foot a{color:var(--brand);font-weight:500}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main class="box">
+  <div class="logo"><i>HT</i>SCI - TECH</div>
+  <h1>ลืมรหัสผ่าน</h1>
+
+  <!-- ขั้นที่ 1: กรอกอีเมล -->
+  <form id="f1" novalidate>
+    <p class="sub">กรอกอีเมลที่ใช้สมัคร เราจะส่งรหัสยืนยัน 6 หลักไปให้</p>
+    <label for="email">อีเมล</label>
+    <input id="email" type="email" autocomplete="email" required>
+    <p class="msg" id="msg1" role="alert"></p>
+    <button class="go" id="btn1" type="submit">ส่งรหัสยืนยัน</button>
+  </form>
+
+  <!-- ขั้นที่ 2: กรอกรหัส + รหัสผ่านใหม่ -->
+  <form id="f2" novalidate hidden>
+    <p class="sub">ส่งรหัสไปที่ <b id="sentTo"></b> แล้ว (ใช้ได้ 10 นาที) ถ้าไม่เจอให้ดูในโฟลเดอร์สแปม</p>
+    <label for="code">รหัสยืนยัน 6 หลัก</label>
+    <input id="code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" required>
+
+    <label for="p">รหัสผ่านใหม่</label>
+    <input id="p" type="password" autocomplete="new-password" required>
+    <small>อย่างน้อย 6 ตัวอักษร</small>
+
+    <label for="p2">ยืนยันรหัสผ่านใหม่</label>
+    <input id="p2" type="password" autocomplete="new-password" required>
+
+    <p class="msg" id="msg2" role="alert"></p>
+    <button class="go" id="btn2" type="submit">ตั้งรหัสผ่านใหม่</button>
+    <button class="link" id="resend" type="button">ส่งรหัสอีกครั้ง</button>
+  </form>
+
+  <p class="foot"><a href="login.html">กลับไปหน้าเข้าสู่ระบบ</a></p>
+</main>
+
+<script src="config.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const say = (id, t, ok) => { $(id).textContent = t; $(id).className = 'msg' + (ok ? ' ok' : ''); };
+let email = '', timer = null;
+
+function cooldown(sec) {
+  clearInterval(timer);
+  $('resend').disabled = true;
+  let left = sec;
+  const tick = () => {
+    $('resend').textContent = left > 0 ? `ส่งรหัสอีกครั้งได้ใน ${left} วินาที` : 'ส่งรหัสอีกครั้ง';
+    if (left-- <= 0) { clearInterval(timer); $('resend').disabled = false; }
+  };
+  tick(); timer = setInterval(tick, 1000);
+}
+
+async function sendCode(btn, msgId) {
+  const label = btn.textContent;
+  btn.disabled = true; btn.textContent = 'กำลังส่ง...'; say(msgId, '');
+  const r = await callSheet({ action: 'requestReset', email });
+  btn.textContent = label; btn.disabled = false;
+  return r;
+}
+
+$('f1').addEventListener('submit', async e => {
+  e.preventDefault();
+  email = $('email').value.trim().toLowerCase();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return say('msg1', 'รูปแบบอีเมลไม่ถูกต้อง');
+  const r = await sendCode($('btn1'), 'msg1');
+  if (!r.ok) return say('msg1', r.error || 'ส่งไม่สำเร็จ');
+  $('sentTo').textContent = email;
+  $('f1').hidden = true; $('f2').hidden = false;
+  $('code').focus(); cooldown(60);
+});
+
+$('resend').onclick = async () => {
+  const r = await sendCode($('resend'), 'msg2');
+  if (!r.ok) return say('msg2', r.error || 'ส่งไม่สำเร็จ');
+  say('msg2', 'ส่งรหัสใหม่แล้ว', true); cooldown(60);
+};
+
+$('f2').addEventListener('submit', async e => {
+  e.preventDefault();
+  const code = $('code').value.trim(), password = $('p').value;
+  if (!/^\d{6}$/.test(code)) return say('msg2', 'กรุณากรอกรหัสยืนยัน 6 หลัก');
+  if (password.length < 6) return say('msg2', 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร');
+  if (password !== $('p2').value) return say('msg2', 'รหัสผ่านทั้งสองช่องไม่ตรงกัน');
+
+  $('btn2').disabled = true; $('btn2').textContent = 'กำลังบันทึก...'; say('msg2', '');
+  const r = await callSheet({ action: 'confirmReset', email, code, password });
+  $('btn2').disabled = false; $('btn2').textContent = 'ตั้งรหัสผ่านใหม่';
+
+  if (!r.ok) return say('msg2', r.error || 'ตั้งรหัสผ่านไม่สำเร็จ');
+  say('msg2', 'ตั้งรหัสผ่านใหม่แล้ว กำลังพาไปหน้าเข้าสู่ระบบ...', true);
+  setTimeout(() => location.href = 'login.html?reset=1', 1200);
+});
+</script>
+</body>
+</html>
