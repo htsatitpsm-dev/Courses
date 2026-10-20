@@ -1,5 +1,5 @@
 // วาง URL ของ Web App ที่ได้จาก Google Apps Script ตรงนี้ (ลงท้ายด้วย /exec)
-const API_URL = "https://script.google.com/macros/s/AKfycbxwG1v79IaQlCYR6dPIo0JKs3XUOuPpS4XyHJhieyG9vNhM9EruKixiQLeDYFsHMlY/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzXbTEDUkLC55JVvlJRyBxBs8mxgp3NTpJspNBIo3snCvBSw-1yQUcAgvDhooGEApNX_w/exec";
 
 // ฟังก์ชันกลางสำหรับเรียก Google Sheet (ใช้ทั้งหน้า login และ register)
 async function callSheet(payload) {
